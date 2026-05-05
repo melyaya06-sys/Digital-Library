@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Perpustakaan Digital</title>
+
+<style>
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    background: url('https://images.unsplash.com/photo-1495446815901-a7297e633e8d') no-repeat center/cover;
+}
+
+/* overlay blur */
+.overlay {
+    backdrop-filter: blur(10px);
+    background: rgba(0,0,0,0.5);
+    min-height: 100vh;
+    padding: 30px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+}
+
+h1 {
+    text-align: center;
+    color: white;
+    margin-bottom: 20px;
+}
+
+/* search */
+.wadah-pencarian {
+    margin-bottom: 20px;
+}
+.input-pencarian {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    outline: none;
+}
+
+/* grid kartu */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+    gap: 20px;
+}
+
+/* kartu */
+.card {
+    background: rgba(255,255,255,0.15);
+    border-radius: 15px;
+    padding: 15px;
+    backdrop-filter: blur(15px);
+    color: white;
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
+
+.card img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.card h3 {
+    margin: 10px 0 5px;
+}
+
+.card p {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+/* aksi */
+.aksi {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.aksi span {
+    cursor: pointer;
+}
+
+/* tombol tambah */
+.tombol-utama {
+    margin-top: 25px;
+    padding: 12px;
+    width: 100%;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(45deg,#ff758c,#ff7eb3);
+    color: white;
+    font-size: 16px;
+}
+
+/* modal */
+.modal {
+    display:none;
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    background:rgba(0,0,0,0.7);
+    justify-content:center;
+    align-items:center;
+}
+
+.modal-content {
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    width:320px;
+}
+
+.modal input {
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="overlay">
+<div class="container">
+
+<h1>📚 Perpustakaan Digital</h1>
+
+<div class="wadah-pencarian">
+    <input type="text" id="inputPencarian" class="input-pencarian" placeholder="Cari buku...">
+</div>
+
+<div class="grid" id="gridBuku"></div>
+
+<button class="tombol-utama" onclick="bukaModal()">+ Tambah Koleksi</button>
+
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+<div class="modal-content">
+<h3 id="judulModal">Tambah Buku</h3>
+
+<input id="judul" placeholder="Judul">
+<input id="penulis" placeholder="Penulis">
+<input id="tahun" placeholder="Tahun">
+<input id="kategori" placeholder="Kategori">
+<input id="gambar" placeholder="URL Gambar">
+
+<button onclick="simpan()">Simpan</button>
+<button onclick="tutupModal()">Cancel</button>
+
+</div>
+</div>
+
+<script>
+
+let dataBuku = [
+{
+judul:"Berani Berubah Untuk Menjadi Lebih Baik",
+penulis:"Mulasih Tary",
+tahun:"2020",
+kategori:"Motivasi",
+gambar:"https://image.gramedia.net/rs:fit:0:0/plain/https://cdn.gramedia.com/uploads/items/berani_berubah.jpg"
+},
+{
+judul:"SEJARAH KESULTANAN DAN BUDAYA BANJAR",
+penulis:"Sahriyansah",
+tahun:"2016",
+kategori:"Sejarah",
+gambar:"https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/98/MTA-50972208/aswaja-pressindo_buku-sejarah-kesultanan-dan-budaya-banjar-oleh-sahriansyah_full01.jpg"
+},
+{
+judul:"Berani Melangkah, Berani Sukses",
+penulis:"Muhammad Taufik",
+tahun:"2018",
+kategori:"Motifasi",
+gambar:"https://books.google.co.id/books/publisher/content?id=C2VnDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&imgtk=AFLRE717S7AxtiLOcKPQbS3diBPZp_Lzrja-MmXDJarWFTglzibvbNooNwcWFRH5Q-Rzlu-rLkYtLCGLY6HRMhcpsAIwrtNk9YT8au0azpoQVlToaXhWct0naEGML51Ot3kibdGPdinQ"
+},
+];
+
+let indexEdit = null;
+
+function render(){
+    let grid = document.getElementById("gridBuku");
+    grid.innerHTML = "";
+
+    dataBuku.forEach((buku,i)=>{
+        grid.innerHTML += `
+        <div class="card">
+            <img src="${buku.gambar}">
+            <h3>${buku.judul}</h3>
+            <p>${buku.penulis}</p>
+            <p>${buku.tahun} • ${buku.kategori}</p>
+
+            <div class="aksi">
+                <span onclick="edit(${i})">✏️ Edit</span>
+                <span onclick="hapus(${i})">🗑️ Hapus</span>
+            </div>
+        </div>
+        `;
+    });
+}
+
+function bukaModal(){
+    indexEdit = null;
+    modal.style.display="flex";
+}
+
+function tutupModal(){
+    modal.style.display="none";
+}
+
+function simpan(){
+    let buku = {
+        judul:judul.value,
+        penulis:penulis.value,
+        tahun:tahun.value,
+        kategori:kategori.value,
+        gambar:gambar.value
+    };
+
+    if(indexEdit==null){
+        dataBuku.push(buku);
+    } else {
+        dataBuku[indexEdit]=buku;
+    }
+
+    tutupModal();
+    render();
+}
+
+function edit(i){
+    indexEdit=i;
+    let b=dataBuku[i];
+
+    judul.value=b.judul;
+    penulis.value=b.penulis;
+    tahun.value=b.tahun;
+    kategori.value=b.kategori;
+    gambar.value=b.gambar;
+
+    bukaModal();
+}
+
+function hapus(i){
+    if(confirm("Hapus buku?")){
+        dataBuku.splice(i,1);
+        render();
+    }
+}
+
+/* search */
+inputPencarian.addEventListener("keyup", function(){
+    let keyword=this.value.toLowerCase();
+    let cards=document.querySelectorAll(".card");
+
+    cards.forEach(card=>{
+        card.style.display = card.innerText.toLowerCase().includes(keyword) ? "" : "none";
+    });
+});
+
+render();
+
+</script>
+
+</body>
+</html>
